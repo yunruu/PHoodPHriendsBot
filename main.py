@@ -35,20 +35,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.bot.send_message(
         chat_id=update.effective_chat.id, 
         text=f"Hi {update.effective_user.name}! I'm {os.environ.get('BOT_NAME')}!, a bot that helps manage your food orders and connect with like minded foodies.\n"
-        + "To get started, type /help to see what I can do for you or click on one of the buttons below."
-        , reply_markup=InlineKeyboardMarkup(keyboard)
+        + "To get started, type /help to see what I can do for you or click on one of the buttons below.", 
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
-    
-async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Parses the CallbackQuery and updates the message text."""
-    query = update.callback_query
-
-    # CallbackQueries need to be answered, even if no notification to the user is needed
-    # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
-    await query.answer()
-
-    await query.edit_message_text(text=f"Selected option: {query.data}")
-
     
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.bot.send_message(
@@ -58,6 +47,32 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
 async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Sorry, I didn't understand that command.")
+    
+async def exit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="Bye!")
+    await context.bot.edit_message_reply_markup(chat_id=update.effective_chat.id, message_id=query.message.message_id, reply_markup=None)
+
+async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Parses the CallbackQuery and updates the message text."""
+    query = update.callback_query
+    command = update.callback_query.data
+    
+    # CallbackQueries need to be answered, even if no notification to the user is needed
+    # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
+    match command:
+        case 'start_new_order':
+            await context.bot.send_message(chat_id=update.effective_chat.id, text="Start New Order")
+        case 'join_existing_order':
+            await context.bot.send_message(chat_id=update.effective_chat.id, text="Join Existing Order")
+        case 'view_past_orders':
+            await context.bot.send_message(chat_id=update.effective_chat.id, text="View Past Orders")
+        case 'help':
+            await help(update, context)
+        case 'exit':
+            await exit(update, context)
+        case default:
+            await query.answer()
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(os.environ.get('BOT_TOKEN')).build()
